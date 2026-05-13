@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { font-family: 'Inter', sans-serif; }
+
+body {
+  @apply bg-slate-50 text-slate-800;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-slate-100; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
+
+/* Transitions */
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Status pill colors */
+.status-essential { @apply bg-emerald-100 text-emerald-700; }
+.status-optional   { @apply bg-amber-100 text-amber-700; }
+.status-cut        { @apply bg-red-100 text-red-600 line-through opacity-70; }

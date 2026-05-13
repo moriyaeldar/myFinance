@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "israeli-bank-connector": {
+      "source": "skills-il/tax-and-finance",
+      "sourceType": "github",
+      "computedHash": "fd808967bac141bef8e2c4d6db0f0cbf28175c949f16656950c367d6d8ec4ad2"
+    }
+  }
+}
