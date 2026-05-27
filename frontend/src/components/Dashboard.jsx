@@ -16,6 +16,9 @@ import { translateCategory } from '../i18n'
 const COLORS = [
   '#0ea5e9','#8b5cf6','#f59e0b','#22c55e','#ef4444',
   '#f97316','#06b6d4','#ec4899','#84cc16','#64748b',
+  '#a855f7','#10b981','#f43f5e','#3b82f6','#eab308',
+  '#14b8a6','#6366f1','#e11d48','#0891b2','#7c3aed',
+  '#d97706','#16a34a','#dc2626',
 ]
 
 function StatCard({ label, value, sub, icon: Icon, color = 'sky' }) {

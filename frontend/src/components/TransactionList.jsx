@@ -7,10 +7,14 @@ import { useLang } from '../LangContext'
 import { translateCategory } from '../i18n'
 
 const CATEGORY_ICONS = {
-  'Housing': '🏠', 'Food & Dining': '🍽️', 'Transportation': '🚗',
-  'Health & Fitness': '🏋️', 'Bills & Utilities': '⚡', 'Shopping': '🛒',
-  'Entertainment': '🎬', 'Personal Care': '💆', 'Education': '📚',
-  'Travel': '✈️', 'Savings & Investments': '💰', 'Income': '💵', 'Other': '📦',
+  'Income': '💵', 'Housing': '🏠', 'Food & Dining': '🛒',
+  'Restaurants & Cafes': '🍽️', 'Communication': '📱', 'Bills & Utilities': '⚡',
+  'Insurance': '🛡️', 'Transportation': '🚗', 'Health & Fitness': '🏥',
+  'Children & Family': '👶', 'Clothing & Fashion': '👗', 'Home & Garden': '🪴',
+  'Shopping': '🛍️', 'Entertainment': '🎬', 'Personal Care': '💆',
+  'Pets': '🐾', 'Gifts & Donations': '🎁', 'Education': '📚',
+  'Travel': '✈️', 'Loans & Credit': '🏦', 'ATM & Cash': '💴',
+  'Savings & Investments': '💰', 'Other': '📦',
 }
 
 function fmt(n) {

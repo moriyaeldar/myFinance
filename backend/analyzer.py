@@ -12,144 +12,136 @@ from typing import List, Dict, Tuple
 # ---------------------------------------------------------------------------
 CATEGORY_RULES: List[Tuple[str, str, List[str]]] = [
     # ── Israeli merchants (checked first) ────────────────────────────────────
+
     # Income
-    ("Income", "Salary", ["משכורת", "שכר עבודה", "תשלום שכר", "הפקדת שכר"]),
+    ("Income", "Salary",          ["משכורת", "שכר עבודה", "תשלום שכר", "הפקדת שכר"]),
+    ("Income", "Government",      ["קצבת ילדים", "קצבה", "ביטוח לאומי", "מענק", "החזר מס", "מס הכנסה החזר"]),
+    ("Income", "Transfer In",     ["bit", "פייבוקס", "paybox", "העברה", "זיכוי"]),
 
     # Housing
-    ("Housing", "Rent / Mortgage", ["ארנונה", "ועד בית", "שכירות", "משכנתא"]),
+    ("Housing", "Rent / Mortgage", ["ארנונה", "ועד בית", "שכירות", "משכנתא", "טפחות", "בנק למשכנתאות"]),
 
-    # Food & Dining
+    # Loans & Credit
+    ("Loans & Credit", "Loan Payment",   ["הלוואה", "הו\"ק הלו", "קרן הלוואה", "ריבית הלוואה", "החזר הלוואה"]),
+    ("Loans & Credit", "Credit Card",    ["מקס איט", "max it", "ישראכרט", "isracard payment", "כאל תשלום", "לאומי קארד תשלום"]),
+
+    # Restaurants & Cafes
+    ("Restaurants & Cafes", "Coffee",    ["ארומה", "aroma", "קפולסקי", "kapulsky", "קפה ג'ו", "cafe joe", "גוגל קפה", "נספרסו", "nespresso", "starbucks", "coffee"]),
+    ("Restaurants & Cafes", "Fast Food", ["מקדונלד", "mcdonalds", "בורגר קינג", "burger king", "מקפלטס", "כנאפה", "שווארמה", "פלאפל", "פיצה", "pizza", "המבורגר", "BBB", "burger"]),
+    ("Restaurants & Cafes", "Dining",    ["מסעדה", "restaurant", "דיינינג", "bistro", "סושי", "sushi", "קוקוריקו", "ווקו", "wolt", "וולט"]),
+
+    # Food & Dining (groceries)
     ("Food & Dining", "Groceries", [
         "שופרסל", "shufersal", "רמי לוי", "rami levy", "ramilevi",
         "ויקטורי", "victory market", "יוחננוף", "yochananof",
         "אושר עד", "osher ad", "טיב טעם", "tiv taam",
-        "am:pm", "עם פם", "מחסני השוק",
+        "am:pm", "עם פם", "מחסני השוק", "freshmarket", "supermarket",
+        "grocery", "whole foods", "trader joe", "kroger", "safeway", "publix",
+        "aldi", "costco", "sam's club", "wegmans", "heb",
     ]),
-    ("Food & Dining", "Restaurants", ["קפה", "מסעדה", "פיצה", "המבורגר", "שווארמה", "פלאפל"]),
+    ("Food & Dining", "Food Delivery", [
+        "doordash", "uber eats", "grubhub", "instacart", "postmates", "seamless",
+    ]),
 
-    # Transportation
-    ("Transportation", "Gas & Fuel", ["סונול", "sonol", "פז דלק", "paz fuel", "דלק ישראל", "delek", "ten fuel", "טן פול"]),
-    ("Transportation", "Public Transit", ["רב קו", "rav kav", "רב-קו", "ravkav"]),
-    ("Transportation", "Rideshare", ["גט טקסי", "gett", "יאנגו", "yango"]),
+    # Communication
+    ("Communication", "Mobile",   ["סלקום", "cellcom", "פרטנר", "partner", "פלאפון", "pelephone", "הוט מובייל", "hot mobile", "012mobile", "rami-levy comm", "רמי לוי תקשורת"]),
+    ("Communication", "Internet", ["בזק", "bezeq", "הוט נט", "hot net", "xfinity", "comcast", "at&t internet", "verizon fios", "cox", "spectrum"]),
+    ("Communication", "TV",       ["yes", "יס", "הוט tv", "hot tv", "cable tv", "directv", "sling"]),
 
     # Bills & Utilities
-    ("Bills & Utilities", "Electricity", ["חברת חשמל", "חח\"י", "israel electric"]),
-    ("Bills & Utilities", "Water", ["מקורות", "mekorot", "תאגיד מים"]),
-    ("Bills & Utilities", "Phone", [
-        "בזק", "bezeq", "פרטנר", "partner comm", "סלקום", "cellcom",
-        "הוט מובייל", "hot mobile", "פלאפון", "pelephone",
-    ]),
-    ("Bills & Utilities", "Insurance", [
-        "הראל ביטוח", "harel", "מגדל ביטוח", "migdal",
-        "מנורה מבטחים", "menora", "כלל ביטוח", "clal insurance",
-        "איילון ביטוח", "הפניקס", "phoenix insurance",
-    ]),
+    ("Bills & Utilities", "Electricity", ["חברת חשמל", "חח\"י", "israel electric", "electric", "pge", "con ed", "duke energy"]),
+    ("Bills & Utilities", "Water",       ["מקורות", "mekorot", "תאגיד מים", "water bill", "sewage"]),
+    ("Bills & Utilities", "Gas Utility", ["גז ישראל", "supergas", "paz gas", "nicor", "atmos", "gas utility"]),
+    ("Bills & Utilities", "Municipality",["ארנונה", "עיריית", "מועצה מקומית"]),
 
-    # Health & Fitness
-    ("Health & Fitness", "Doctor / Hospital", [
-        "כללית", "clalit", "מכבי", "maccabi health", "מאוחדת", "meuhedet",
-        "לאומית בריאות", "leumit health",
-    ]),
-    ("Health & Fitness", "Pharmacy", ["סופר פארם", "super pharm", "ניו פארם", "new pharm", "be pharm"]),
-
-    # Entertainment
-    ("Entertainment", "Movies & Events", ["yes planet", "יס פלאנט", "סינמה סיטי", "cinema city", "סינמטק"]),
-
-    # Savings & Investments
-    ("Savings & Investments", "Retirement", [
-        "קרן פנסיה", "פנסיה", "קרן השתלמות", "hishtalmut", "קופת גמל", "gemel",
-    ]),
-
-    # ── US / international merchants ─────────────────────────────────────────
-    # Income
-    ("Income", "Payroll", ["payroll", "salary", "direct dep", "direct deposit", "ach credit", "paycheck"]),
-    ("Income", "Refund", ["refund", "cashback", "cash back", "rebate"]),
-    ("Income", "Transfer In", ["transfer in", "zelle in", "venmo in"]),
-
-    # Housing
-    ("Housing", "Rent / Mortgage", ["rent", "mortgage", "landlord", "realty", "housing"]),
-    ("Housing", "Home Insurance", ["home insurance", "homeowners insurance", "renters insurance"]),
-    ("Housing", "HOA", ["hoa", "homeowners association"]),
-    ("Housing", "Repairs", ["plumber", "electrician", "handyman", "home repair", "home depot", "lowe's", "lowes"]),
-
-    # Bills & Utilities
-    ("Bills & Utilities", "Electricity", ["electric", "electricity", "pge", "con ed", "comed", "duke energy"]),
-    ("Bills & Utilities", "Water", ["water bill", "water utility", "sewage"]),
-    ("Bills & Utilities", "Gas Utility", ["gas bill", "gas utility", "nicor", "spire", "atmos"]),
-    ("Bills & Utilities", "Internet", ["comcast", "xfinity", "at&t internet", "verizon fios", "cox", "spectrum internet"]),
-    ("Bills & Utilities", "Phone", ["t-mobile", "verizon wireless", "at&t wireless", "sprint", "cricket", "mint mobile"]),
-    ("Bills & Utilities", "Cable / TV", ["cable", "directv", "dish network", "sling"]),
-    ("Bills & Utilities", "Insurance", ["insurance", "geico", "allstate", "progressive", "state farm", "aetna", "cigna", "humana", "blue cross"]),
-
-    # Food & Dining
-    ("Food & Dining", "Groceries", [
-        "grocery", "supermarket", "whole foods", "trader joe", "kroger", "safeway", "publix",
-        "aldi", "walmart grocery", "target grocery", "costco", "sam's club", "heb", "wegmans",
-        "sprouts", "fresh market", "market basket", "stop and shop", "food lion",
-    ]),
-    ("Food & Dining", "Restaurants", [
-        "restaurant", "diner", "bistro", "grill", "steakhouse", "sushi", "pizza", "burger",
-        "mcdonald", "wendy's", "taco bell", "chipotle", "subway", "domino", "papa john",
-        "chick-fil-a", "popeyes", "kfc", "in-n-out", "shake shack", "five guys",
-    ]),
-    ("Food & Dining", "Coffee & Cafes", ["starbucks", "dunkin", "coffee", "cafe", "espresso", "dutch bros", "peet's"]),
-    ("Food & Dining", "Food Delivery", ["doordash", "uber eats", "grubhub", "instacart", "postmates", "seamless", "delivery"]),
-    ("Food & Dining", "Alcohol & Bars", ["bar", "brewery", "winery", "liquor", "beer", "wine shop", "total wine"]),
+    # Insurance
+    ("Insurance", "Life & Health",  ["הראל ביטוח", "harel", "מגדל ביטוח", "migdal", "מנורה", "menora", "כלל ביטוח", "clal", "איילון", "הפניקס", "phoenix"]),
+    ("Insurance", "Car Insurance",  ["ביטוח רכב", "שירביט", "shibrit", "direct insurance", "הכשרה ביטוח", "allianz"]),
+    ("Insurance", "Home Insurance", ["ביטוח דירה", "ביטוח בית", "home insurance", "renters insurance", "geico", "allstate", "progressive", "state farm"]),
 
     # Transportation
-    ("Transportation", "Gas & Fuel", ["shell", "chevron", "exxon", "mobil", "bp", "arco", "gas station", "fuel", "sunoco", "speedway", "circle k"]),
-    ("Transportation", "Rideshare", ["uber", "lyft", "taxi", "cab"]),
-    ("Transportation", "Public Transit", ["mta", "cta", "bart", "metro", "subway", "bus", "transit", "commuter rail", "amtrak"]),
-    ("Transportation", "Parking", ["parking", "parkway", "garage", "meter"]),
-    ("Transportation", "Car Payment", ["auto loan", "car payment", "car loan", "toyota financial", "honda financial", "ford credit"]),
-    ("Transportation", "Car Insurance", ["auto insurance", "car insurance", "vehicle insurance"]),
-    ("Transportation", "Car Maintenance", ["auto repair", "oil change", "tire", "mechanic", "jiffy lube", "pep boys", "midas"]),
-    ("Transportation", "Tolls", ["toll", "e-zpass", "fastrak", "sunpass"]),
-    ("Transportation", "Flights", ["airline", "delta", "united airlines", "american airlines", "southwest", "jetblue", "spirit airlines"]),
+    ("Transportation", "Gas & Fuel",      ["סונול", "sonol", "פז דלק", "paz", "דלק ישראל", "delek", "ten fuel", "טן", "shell", "chevron", "exxon", "bp", "fuel"]),
+    ("Transportation", "Public Transit",  ["רב קו", "rav kav", "רב-קו", "ravkav", "מטרו", "רכבת", "train", "bus", "mta", "transit"]),
+    ("Transportation", "Rideshare",       ["גט", "gett", "יאנגו", "yango", "uber", "lyft", "taxi", "cab"]),
+    ("Transportation", "Parking",         ["חניה", "parking", "parkway", "garage"]),
+    ("Transportation", "Car Maintenance", ["מוסך", "טסט", "בדיקת רכב", "oil change", "tire", "mechanic"]),
+    ("Transportation", "Flights",         ["אל על", "el al", "ישראייר", "israir", "ויצ'אייר", "wizz", "ריינאייר", "ryanair", "easyjet", "delta", "united", "american airlines", "southwest"]),
 
     # Health & Fitness
-    ("Health & Fitness", "Doctor / Hospital", ["hospital", "urgent care", "clinic", "doctor", "physician", "surgery", "er visit", "emergency"]),
-    ("Health & Fitness", "Pharmacy", ["pharmacy", "cvs", "walgreens", "rite aid", "duane reade", "prescription", "rx"]),
-    ("Health & Fitness", "Dental & Vision", ["dentist", "dental", "orthodontist", "optometrist", "vision", "eyeglasses", "contact lens"]),
-    ("Health & Fitness", "Gym & Fitness", ["gym", "fitness", "planet fitness", "la fitness", "anytime fitness", "crossfit", "peloton", "yoga", "pilates", "equinox"]),
-    ("Health & Fitness", "Mental Health", ["therapy", "therapist", "psychiatrist", "counseling", "betterhelp", "talkspace"]),
+    ("Health & Fitness", "HMO",           ["כללית", "clalit", "מכבי", "maccabi", "מאוחדת", "meuhedet", "לאומית", "leumit"]),
+    ("Health & Fitness", "Pharmacy",      ["סופר פארם", "super pharm", "ניו פארם", "new pharm", "be pharm", "pharmacy", "cvs", "walgreens"]),
+    ("Health & Fitness", "Dental",        ["דנטל", "dental", "שיניים", "אורתודנט", "orthodont"]),
+    ("Health & Fitness", "Gym & Fitness", ["פיטנס", "fitness", "gym", "חדר כושר", "יוגה", "yoga", "pilates", "peloton", "crossfit"]),
+    ("Health & Fitness", "Mental Health", ["פסיכולוג", "טיפול", "therapy", "therapist", "betterhelp"]),
+
+    # Children & Family
+    ("Children & Family", "Childcare",    ["גן ילדים", "גנון", "מעון", "צהרון", "babysitter", "daycare", "preschool", "nursery"]),
+    ("Children & Family", "Kids Activities", ["ג'אנגו", "funpark", "ילדות", "toys", "צעצוע", "toysr", "the children", "ממלכה", "fun"]),
+    ("Children & Family", "School",       ["בית ספר", "school", "tuition", "חינוך", "לימודים", "enrollment", "university", "college"]),
+    ("Children & Family", "Baby",         ["פמפרס", "pampers", "huggies", "baby", "תינוק", "חיתול"]),
+
+    # Clothing & Fashion
+    ("Clothing & Fashion", "Clothing",    [
+        "זארה", "zara", "H&M", "h&m", "גולף", "golf", "קסטרו", "castro",
+        "רנואר", "renuar", "FOX", "fox", "מנגו", "mango", "טופ10", "top10",
+        "פוקס", "next", "נקסט", "ביגוד", "clothing", "apparel", "fashion",
+        "gap", "old navy", "banana republic", "nordstrom", "tj maxx",
+    ]),
+    ("Clothing & Fashion", "Shoes",       ["adidas", "nike", "new balance", "נייקי", "אדידס", "נעליים", "shoes", "foot locker"]),
+    ("Clothing & Fashion", "Accessories", ["תכשיטים", "jewelry", "watches", "swatch", "pandora"]),
+
+    # Home & Garden
+    ("Home & Garden", "Furniture",       ["איקאה", "ikea", "אייס", "ace", "wayfair", "pottery barn", "west elm", "home depot", "lowes"]),
+    ("Home & Garden", "Appliances",      ["שקם אלקטריק", "shakem", "כ.א.ל", "best buy", "electronics"]),
+    ("Home & Garden", "Home Improvement",["אורן יצחק", "הנחת רצפה", "plumber", "electrician", "handyman", "home repair"]),
+    ("Home & Garden", "Garden",          ["גינה", "garden", "plants", "צמחים"]),
 
     # Entertainment
-    ("Entertainment", "Streaming", ["netflix", "hulu", "disney+", "disney plus", "hbo max", "peacock", "paramount+", "apple tv", "amazon prime video", "crunchyroll"]),
-    ("Entertainment", "Music", ["spotify", "apple music", "tidal", "pandora", "youtube music", "soundcloud"]),
-    ("Entertainment", "Gaming", ["playstation", "xbox", "nintendo", "steam", "epic games", "apple arcade", "google play games"]),
-    ("Entertainment", "Movies & Events", ["cinema", "amc theatres", "regal", "fandango", "ticketmaster", "stubhub", "concert", "event"]),
-    ("Entertainment", "Books & Media", ["audible", "kindle", "scribd", "book", "library fine"]),
-    ("Entertainment", "Hobbies", ["hobby", "craft", "art supply", "michaels", "joann"]),
+    ("Entertainment", "Streaming",       ["נטפליקס", "netflix", "hulu", "disney", "hbo", "apple tv", "amazon prime", "yes vod", "hot vod"]),
+    ("Entertainment", "Music",           ["spotify", "apple music", "soundcloud", "youtube music"]),
+    ("Entertainment", "Gaming",          ["playstation", "xbox", "nintendo", "steam", "epic games"]),
+    ("Entertainment", "Cinema & Events", ["yes planet", "יס פלאנט", "סינמה סיטי", "cinema city", "סינמטק", "cinema", "ticketmaster", "event"]),
+    ("Entertainment", "Sports Events",   ["כדורגל", "כדורסל", "טדי", "בלומפילד", "סמי עופר", "hapoel", "maccabi fc"]),
 
     # Shopping
-    ("Shopping", "Online Shopping", ["amazon", "ebay", "etsy", "shopify", "wish.com", "online order"]),
-    ("Shopping", "Clothing & Apparel", ["zara", "h&m", "gap", "old navy", "banana republic", "nordstrom", "macy's", "tj maxx", "marshall", "ross", "clothing", "apparel", "fashion"]),
-    ("Shopping", "Electronics", ["apple store", "best buy", "newegg", "micro center", "b&h photo", "electronics"]),
-    ("Shopping", "General Retail", ["target", "walmart", "costco", "sam's club", "dollar general", "dollar tree", "five below", "big lots"]),
-    ("Shopping", "Home & Garden", ["ikea", "wayfair", "bed bath", "williams sonoma", "pottery barn", "west elm", "crate and barrel", "home goods"]),
+    ("Shopping", "Online Shopping",      ["amazon", "ebay", "aliexpress", "אליאקספרס", "etsy", "online order"]),
+    ("Shopping", "General Retail",       ["target", "walmart", "dollar general", "big lots"]),
+    ("Shopping", "Electronics",          ["apple store", "idigital", "ivory", "bug", "newegg", "micro center", "b&h"]),
 
     # Personal Care
-    ("Personal Care", "Haircut & Salon", ["salon", "barber", "hair", "haircut", "hairstyle", "great clips", "supercuts"]),
-    ("Personal Care", "Beauty & Spa", ["spa", "massage", "nail", "manicure", "pedicure", "sephora", "ulta", "beauty", "skincare"]),
-    ("Personal Care", "Laundry", ["laundry", "dry clean", "laundromat"]),
+    ("Personal Care", "Haircut & Salon", ["מספרה", "קוסמטיקה", "salon", "barber", "hair", "haircut", "great clips"]),
+    ("Personal Care", "Beauty & Spa",    ["ספא", "spa", "massage", "עיסוי", "nail", "manicure", "sephora", "ulta", "beauty"]),
 
-    # Education
-    ("Education", "Tuition & Fees", ["tuition", "university", "college", "school fee", "enrollment"]),
-    ("Education", "Online Courses", ["udemy", "coursera", "skillshare", "masterclass", "linkedin learning", "pluralsight", "codecademy"]),
-    ("Education", "Books & Supplies", ["textbook", "school supply", "staples", "office depot"]),
-    ("Education", "Childcare", ["daycare", "babysitter", "nursery", "preschool", "after school"]),
+    # Pets
+    ("Pets", "Vet & Care",   ["וטרינר", "veterinar", "vet clinic", "animal hospital"]),
+    ("Pets", "Pet Food",     ["pet", "כלב", "חתול", "zoo", "petco", "petsmart", "עולם הכלב"]),
 
-    # Travel
-    ("Travel", "Hotels & Lodging", ["hotel", "marriott", "hilton", "hyatt", "airbnb", "vrbo", "motel", "inn", "resort"]),
-    ("Travel", "Car Rental", ["hertz", "enterprise rent", "avis", "budget car", "car rental"]),
-    ("Travel", "Vacation", ["travel", "trip", "vacation", "expedia", "booking.com", "tripadvisor", "kayak"]),
+    # Gifts & Donations
+    ("Gifts & Donations", "Gifts",     ["מתנה", "gift", "פרחים", "flowers", "זר פרחים"]),
+    ("Gifts & Donations", "Donations", ["תרומה", "עמותה", "charity", "donation", "ידידי", "ifeel"]),
+
+    # ATM & Cash
+    ("ATM & Cash", "ATM Withdrawal", ["משיכת מזומן", "כספומט", "atm", "cash withdrawal"]),
 
     # Savings & Investments
-    ("Savings & Investments", "Savings Transfer", ["savings transfer", "transfer to savings", "savings deposit"]),
-    ("Savings & Investments", "Investments", ["robinhood", "fidelity", "schwab", "vanguard", "etrade", "td ameritrade", "betterment", "wealthfront", "investment", "brokerage"]),
-    ("Savings & Investments", "Retirement", ["401k", "ira", "roth ira", "retirement"]),
-    ("Savings & Investments", "Crypto", ["coinbase", "crypto", "bitcoin", "ethereum", "binance"]),
+    ("Savings & Investments", "Savings",     ["קרן השתלמות", "hishtalmut", "קופת גמל", "gemel", "חיסכון", "savings"]),
+    ("Savings & Investments", "Pension",     ["קרן פנסיה", "פנסיה", "pension", "401k", "ira", "retirement"]),
+    ("Savings & Investments", "Investments", ["בורסה", "ני\"ע", "robinhood", "fidelity", "schwab", "vanguard", "etrade", "investment", "brokerage"]),
+    ("Savings & Investments", "Crypto",      ["קריפטו", "coinbase", "bitcoin", "ethereum", "binance", "crypto"]),
+
+    # Education
+    ("Education", "Tuition",         ["שכר לימוד", "אוניברסיטה", "מכללה", "tuition", "university", "college"]),
+    ("Education", "Online Courses",  ["udemy", "coursera", "skillshare", "masterclass", "linkedin learning"]),
+    ("Education", "Books & Supplies",["ספרים", "textbook", "school supply", "staples", "office depot"]),
+
+    # Travel
+    ("Travel", "Hotels",      ["מלון", "hotel", "marriott", "hilton", "hyatt", "airbnb", "vrbo", "inn", "resort"]),
+    ("Travel", "Car Rental",  ["סיקסט", "sixt", "eldan", "אלדן", "hertz", "enterprise", "avis", "car rental"]),
+    ("Travel", "Vacation",    ["expedia", "booking.com", "airbnb", "tripadvisor", "kayak", "trip", "vacation"]),
+
+    # ── US / international income ─────────────────────────────────────────────
+    ("Income", "Payroll",     ["payroll", "salary", "direct dep", "direct deposit", "ach credit", "paycheck"]),
+    ("Income", "Refund",      ["refund", "cashback", "cash back", "rebate"]),
 ]
 
 # Build a fast lookup
