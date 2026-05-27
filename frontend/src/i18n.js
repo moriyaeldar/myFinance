@@ -39,7 +39,7 @@ const T = {
     from_cut_categories: "From categories marked 'Cut'",
     manage_link: 'Manage →',
     no_data_title: 'No data yet',
-    no_data_sub: 'Connect your bank, import a CSV, or load demo data to get started.',
+    no_data_sub: 'Connect your bank or import a CSV to get started.',
     failed_load: 'Failed to load data',
     accounts_connected: 'account', accounts_connected_pl: 'accounts',
     transactions_total: 'transactions',
@@ -47,8 +47,6 @@ const T = {
     // Connect
     connect_title: 'Connect Data Sources',
     connect_sub: 'Add bank accounts, credit cards, or import CSV exports.',
-    demo_title: 'Try Demo Data', demo_sub: 'Load 6 months of realistic sample transactions to explore all features without a real account.',
-    btn_load_demo: 'Load Demo Data', btn_clear_demo: 'Clear Demo',
     plaid_title: 'Connect Bank via Plaid',
     plaid_sub: 'Securely connect your real bank accounts and credit cards using Plaid. Pulls up to 12 months of transactions automatically.',
     plaid_requires: 'Requires', plaid_in_env: 'in your', plaid_file: 'file.',
@@ -103,7 +101,7 @@ const T = {
     monthly_savings_potential: 'Monthly Savings Potential',
     annual_savings_potential: 'Annual Savings Potential',
     high_priority: 'High Priority', other_recs: 'Other Recommendations',
-    no_recs: 'No recommendations yet. Connect a bank or load demo data first.',
+    no_recs: 'No recommendations yet. Connect a bank or import a CSV first.',
     could_not_generate: 'Could not generate recommendations',
     savings_mo: 'savings/mo', priority_suffix: 'PRIORITY',
 
@@ -136,7 +134,7 @@ const T = {
     from_cut_categories: 'מקטגוריות המסומנות לחיסול',
     manage_link: 'נהל ←',
     no_data_title: 'אין נתונים עדיין',
-    no_data_sub: 'חבר חשבון בנק, יבא קובץ CSV, או טען נתוני הדגמה כדי להתחיל.',
+    no_data_sub: 'חבר חשבון בנק או יבא קובץ CSV כדי להתחיל.',
     failed_load: 'טעינת הנתונים נכשלה',
     accounts_connected: 'חשבון', accounts_connected_pl: 'חשבונות',
     transactions_total: 'עסקאות',
@@ -144,8 +142,6 @@ const T = {
     // Connect
     connect_title: 'חיבור מקורות נתונים',
     connect_sub: 'הוסף חשבונות בנק, כרטיסי אשראי, או יבא ייצוא CSV.',
-    demo_title: 'נסה נתוני הדגמה', demo_sub: 'טען 6 חודשים של עסקאות לדוגמה כדי לחקור את כל התכונות ללא חשבון אמיתי.',
-    btn_load_demo: 'טען נתוני הדגמה', btn_clear_demo: 'נקה הדגמה',
     plaid_title: 'חיבור בנק דרך Plaid',
     plaid_sub: 'חבר את חשבונות הבנק שלך בצורה מאובטחת דרך Plaid. מושך עד 12 חודשי עסקאות באופן אוטומטי.',
     plaid_requires: 'דרוש', plaid_in_env: 'בקובץ', plaid_file: 'שלך.',
@@ -200,7 +196,7 @@ const T = {
     monthly_savings_potential: 'פוטנציאל חיסכון חודשי',
     annual_savings_potential: 'פוטנציאל חיסכון שנתי',
     high_priority: 'עדיפות גבוהה', other_recs: 'המלצות נוספות',
-    no_recs: 'אין המלצות עדיין. חבר בנק או טען נתוני הדגמה תחילה.',
+    no_recs: 'אין המלצות עדיין. חבר בנק או יבא CSV תחילה.',
     could_not_generate: 'לא ניתן ליצור המלצות',
     savings_mo: 'חיסכון/חודש', priority_suffix: 'עדיפות',
 

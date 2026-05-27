@@ -2,11 +2,11 @@ import { useState, useCallback, useRef } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  fetchLinkToken, exchangePlaidToken, loadDemo, clearDemo,
+  fetchLinkToken, exchangePlaidToken,
   fetchAccounts, deleteAccount, importCSV,
 } from '../api'
 import {
-  Building2, Upload, PlayCircle, Trash2, CheckCircle2,
+  Building2, Upload, Trash2, CheckCircle2,
   AlertCircle, Loader2, CreditCard, Landmark, BookOpen, CloudUpload,
 } from 'lucide-react'
 import clsx from 'clsx'
@@ -29,16 +29,6 @@ export default function ConnectBank() {
     qc.invalidateQueries({ queryKey: ['accounts'] })
     qc.invalidateQueries({ queryKey: ['analysis'] })
   }
-
-  const demoMut = useMutation({
-    mutationFn: loadDemo,
-    onSuccess: (data) => { showMsg('success', data.message); invalidate() },
-    onError: () => showMsg('error', 'Failed to load demo data.'),
-  })
-  const clearDemoMut = useMutation({
-    mutationFn: clearDemo,
-    onSuccess: () => { showMsg('success', 'Demo data cleared.'); invalidate() },
-  })
 
   const { data: linkData } = useQuery({
     queryKey: ['plaid-link-token'], queryFn: fetchLinkToken, retry: false, staleTime: Infinity,
@@ -89,17 +79,6 @@ export default function ConnectBank() {
       )}
 
       <div className="grid gap-4">
-        {/* Demo */}
-        <Card icon={PlayCircle} title={t('demo_title')} color="amber">
-          <p className="text-sm text-slate-500 mb-4">{t('demo_sub')}</p>
-          <div className="flex gap-3">
-            <Btn onClick={() => demoMut.mutate()} loading={demoMut.isPending} color="amber">{t('btn_load_demo')}</Btn>
-            {accounts.some(a => a.source === 'demo') && (
-              <Btn onClick={() => clearDemoMut.mutate()} loading={clearDemoMut.isPending} variant="ghost">{t('btn_clear_demo')}</Btn>
-            )}
-          </div>
-        </Card>
-
         {/* Plaid */}
         <Card icon={Building2} title={t('plaid_title')} color="sky">
           <p className="text-sm text-slate-500 mb-1">{t('plaid_sub')}</p>
@@ -219,9 +198,7 @@ export default function ConnectBank() {
                   </p>
                 </div>
                 <span className={clsx('text-xs px-2 py-0.5 rounded-full font-medium',
-                  acct.source === 'demo' ? 'bg-amber-100 text-amber-600'
-                    : acct.source === 'plaid' ? 'bg-sky-100 text-sky-600'
-                    : 'bg-violet-100 text-violet-600'
+                  acct.source === 'plaid' ? 'bg-sky-100 text-sky-600' : 'bg-violet-100 text-violet-600'
                 )}>{acct.source}</span>
                 <button onClick={() => deleteMut.mutate(acct.id)} className="text-slate-300 hover:text-red-400 transition ms-2">
                   <Trash2 size={16} />

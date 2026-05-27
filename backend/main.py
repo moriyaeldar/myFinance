@@ -23,7 +23,6 @@ from models import (
 )
 from analyzer import compute_dashboard, compute_category_summaries, compute_monthly_trends
 from csv_importer import parse_csv
-from demo_data import generate_demo_transactions, DEMO_ACCOUNTS
 import ai_advisor
 
 # ---------------------------------------------------------------------------
@@ -71,43 +70,13 @@ def _upsert_transaction(db: Session, data: dict):
 
 
 # ---------------------------------------------------------------------------
-# Demo
-# ---------------------------------------------------------------------------
-
-@app.post("/api/demo/load", tags=["Demo"])
-def load_demo_data(db: Session = Depends(get_db)):
-    """Load 6 months of realistic demo transactions."""
-    # Wipe existing demo data
-    db.query(Transaction).filter_by(source="demo").delete()
-    db.query(Account).filter_by(source="demo").delete()
-
-    for acct in DEMO_ACCOUNTS:
-        _upsert_account(db, acct)
-
-    for txn in generate_demo_transactions(months=6):
-        _upsert_transaction(db, txn)
-
-    db.commit()
-    count = db.query(Transaction).filter_by(source="demo").count()
-    return {"message": f"Loaded {count} demo transactions across 2 accounts."}
-
-
-@app.delete("/api/demo/clear", tags=["Demo"])
-def clear_demo_data(db: Session = Depends(get_db)):
-    db.query(Transaction).filter_by(source="demo").delete()
-    db.query(Account).filter_by(source="demo").delete()
-    db.commit()
-    return {"message": "Demo data cleared."}
-
-
-# ---------------------------------------------------------------------------
 # Plaid
 # ---------------------------------------------------------------------------
 
 @app.get("/api/plaid/link-token", response_model=PlaidLinkTokenResponse, tags=["Plaid"])
 def get_link_token():
     if not os.getenv("PLAID_CLIENT_ID"):
-        raise HTTPException(status_code=400, detail="Plaid credentials not configured. Use demo mode or CSV import.")
+        raise HTTPException(status_code=400, detail="Plaid credentials not configured. Use CSV import.")
     try:
         from plaid_service import create_link_token
         token = create_link_token()

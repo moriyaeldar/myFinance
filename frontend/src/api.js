@@ -43,6 +43,3 @@ export const importCSV = (file, account_name) => {
   }).then(r => r.data)
 }
 
-// ── Demo ──────────────────────────────────────────────────────────────────────
-export const loadDemo   = () => api.post('/demo/load').then(r => r.data)
-export const clearDemo  = () => api.delete('/demo/clear').then(r => r.data)
