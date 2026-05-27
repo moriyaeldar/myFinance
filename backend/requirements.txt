@@ -12,3 +12,4 @@ pandas==2.2.3
 numpy==2.2.0
 aiofiles==24.1.0
 openpyxl==3.1.5
+psycopg2-binary==2.9.10

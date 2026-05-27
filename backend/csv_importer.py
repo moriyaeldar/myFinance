@@ -16,6 +16,7 @@ US banks:
   - Chase, Bank of America, Wells Fargo, Capital One, Amex, Mint, Generic
 """
 import csv
+import hashlib
 import io
 import uuid
 from datetime import datetime, date
@@ -30,6 +31,12 @@ from analyzer import categorize
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _make_id(account_id: str, txn_date, desc: str, amount: float) -> str:
+    """Deterministic ID so re-importing the same file doesn't create duplicates."""
+    key = f"{account_id}|{txn_date}|{desc}|{amount:.2f}"
+    return "csv-" + hashlib.sha1(key.encode()).hexdigest()[:20]
+
+
 def _parse_amount(value: str) -> float:
     if not value:
         return 0.0
@@ -41,11 +48,13 @@ def _parse_amount(value: str) -> float:
 
 
 def _parse_date(value: str) -> date:
-    value = str(value).strip()
+    value = str(value).strip().split(".")[0]  # strip microseconds if present
     for fmt in (
-        "%d/%m/%Y", "%d/%m/%y",   # Israeli: DD/MM/YYYY
-        "%m/%d/%Y", "%m/%d/%y",   # US:      MM/DD/YYYY
-        "%Y-%m-%d",               # ISO
+        "%d/%m/%Y", "%d/%m/%y",       # Israeli: DD/MM/YYYY
+        "%m/%d/%Y", "%m/%d/%y",       # US:      MM/DD/YYYY
+        "%Y-%m-%d %H:%M:%S",          # Hapoalim Excel datetime
+        "%Y-%m-%d",                   # ISO
+        "%d.%m.%Y",                   # DD.MM.YYYY
         "%m-%d-%Y",
         "%d-%m-%Y",
         "%Y/%m/%d",
@@ -69,14 +78,15 @@ def _norm(headers: List[str]) -> dict:
 # Hebrew header keywords for each Israeli bank
 _IL_BANK_SIGNATURES = {
     # Credit-card companies first (more specific headers)
-    "max":       {"תאריך עסקה", "שם בית עסק", "סכום חיוב"},
-    "cal":       {"תאריך עסקה", "שם בית עסק", "סכום"},
-    "isracard":  {"תאריך", "שם בית עסק", "סכום חיוב"},
-    # Banks
-    "hapoalim":  {"תאריך", "תיאור", "חובה", "זכות"},
-    "leumi":     {"תאריך ערך", "תיאור", "חובה", "זכות"},
-    "discount":  {"תאריך", "פרטים", "חובה", "זכות"},
-    "mizrahi":   {"תאריך", "תיאור הפעולה", "חובה", "זכות"},
+    "max":            {"תאריך עסקה", "שם בית עסק", "סכום חיוב"},
+    "cal":            {"תאריך עסקה", "שם בית עסק", "סכום"},
+    "isracard":       {"תאריך", "שם בית עסק", "סכום חיוב"},
+    # Banks — more specific first
+    "hapoalim":       {"תאריך", "הפעולה", "חובה", "זכות"},   # new Hapoalim export format
+    "hapoalim_old":   {"תאריך", "תיאור", "חובה", "זכות"},    # old Hapoalim format
+    "leumi":          {"תאריך ערך", "תיאור", "חובה", "זכות"},
+    "mizrahi":        {"תאריך", "תיאור הפעולה", "חובה", "זכות"},
+    "discount":       {"תאריך", "פרטים", "חובה", "זכות"},
 }
 
 
@@ -113,18 +123,33 @@ def _detect_format(headers: List[str]) -> str:
 def _excel_to_rows(content: bytes, filename: str = "") -> List[List[str]]:
     """
     Read an Excel file and return a list-of-lists (same shape as csv.reader output).
-    Skips leading empty rows so the first non-empty row is treated as the header.
+    Skips leading empty/metadata rows so the first meaningful row is the header.
     """
     ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else "xlsx"
     engine = "xlrd" if ext == "xls" else "openpyxl"
     df = pd.read_excel(io.BytesIO(content), engine=engine, header=None, dtype=str)
     df = df.fillna("")
 
-    rows = df.values.tolist()
-    # Drop completely empty leading rows
-    while rows and all(str(c).strip() == "" for c in rows[0]):
+    rows = [[str(c).strip() for c in row] for row in df.values.tolist()]
+    return _skip_metadata_rows(rows)
+
+
+def _skip_metadata_rows(rows: List[List[str]]) -> List[List[str]]:
+    """
+    Skip leading rows that don't look like a header.
+    Stops at the first row that contains a known Israeli bank header keyword,
+    or the first non-empty row if no keyword is found.
+    """
+    HEADER_KEYWORDS = {"תאריך", "תאריך ערך", "תאריך עסקה", "תיאור", "פרטים",
+                       "חובה", "זכות", "שם בית עסק", "סכום", "date", "description", "amount"}
+    for i, row in enumerate(rows):
+        cells = {c.strip() for c in row if c.strip()}
+        if cells & HEADER_KEYWORDS:
+            return rows[i:]
+    # Fallback: drop only fully empty leading rows
+    while rows and all(not c for c in rows[0]):
         rows.pop(0)
-    return [[str(c).strip() for c in row] for row in rows]
+    return rows
 
 
 # ---------------------------------------------------------------------------
@@ -174,10 +199,18 @@ def _parse_il_row(row, h, fmt, account_id) -> dict | None:
 
     elif fmt == "il_hapoalim":
         txn_date = _parse_date(col("תאריך"))
+        action = col("הפעולה")
+        details = col("פרטים")
+        desc = f"{action} {details}".strip() if details else action
+        debit = _parse_amount(col("חובה"))
+        credit = _parse_amount(col("זכות"))
+        amount = debit if debit else -credit
+
+    elif fmt == "il_hapoalim_old":
+        txn_date = _parse_date(col("תאריך"))
         desc = col("תיאור")
         debit = _parse_amount(col("חובה"))
         credit = _parse_amount(col("זכות"))
-        # Hapoalim: חובה = money out (positive), זכות = money in (negative)
         amount = debit if debit else -credit
 
     elif fmt == "il_leumi":
@@ -213,7 +246,7 @@ def _parse_il_row(row, h, fmt, account_id) -> dict | None:
         category = "Income"
 
     return {
-        "id": f"csv-{uuid.uuid4().hex}",
+        "id": _make_id(account_id, txn_date, desc, amount),
         "account_id": account_id,
         "date": txn_date,
         "description": desc,
@@ -281,6 +314,16 @@ def _parse_us_row(row, h, fmt) -> tuple:
 # Public API
 # ---------------------------------------------------------------------------
 
+def _decode_csv(content: bytes) -> str:
+    """Try common encodings used by Israeli and US banks."""
+    for enc in ("utf-8-sig", "cp1255", "windows-1255", "utf-8", "latin-1"):
+        try:
+            return content.decode(enc)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return content.decode("latin-1")
+
+
 def parse_csv(content: bytes, account_id: str = None, filename: str = "") -> List[dict]:
     """
     Parse a bank CSV or Excel export and return transaction dicts ready for the DB.
@@ -297,14 +340,41 @@ def parse_csv(content: bytes, account_id: str = None, filename: str = "") -> Lis
         fmt = _detect_format(rows[0])
         if fmt.startswith("il_"):
             return _parse_il_bank(rows, fmt, acct_id)
-        # Excel from a US bank — convert to CSV string and fall through
-        # (rare but handle gracefully via generic path)
-        rows_as_text = [rows]  # fallback handled below
+        # US Excel: treat rows directly (no re-decode needed)
+        headers = rows[0]
+        h = _norm(headers)
+        transactions = []
+        for row in rows[1:]:
+            if not row or all(not c for c in row):
+                continue
+            try:
+                txn_date, desc, amount = _parse_us_row(row, h, fmt)
+                if not desc:
+                    continue
+                group, category = categorize(desc)
+                if amount < 0:
+                    group, category = "Income", "Income"
+                transactions.append({
+                    "id": _make_id(acct_id, txn_date, desc, amount),
+                    "account_id": acct_id,
+                    "date": txn_date,
+                    "description": desc,
+                    "merchant_name": None,
+                    "amount": amount,
+                    "category": category,
+                    "category_group": group,
+                    "source": "csv",
+                    "currency": "USD",
+                    "pending": False,
+                })
+            except Exception:
+                continue
+        return transactions
 
     # --- CSV files ---
-    text = content.decode("utf-8-sig", errors="replace")
-    reader = csv.reader(io.StringIO(text))
-    rows = list(reader)
+    text = _decode_csv(content)
+    rows = list(csv.reader(io.StringIO(text)))
+    rows = _skip_metadata_rows(rows)
     if not rows:
         return []
 
@@ -330,7 +400,7 @@ def parse_csv(content: bytes, account_id: str = None, filename: str = "") -> Lis
                 group = "Income"
                 category = "Income"
             transactions.append({
-                "id": f"csv-{uuid.uuid4().hex}",
+                "id": _make_id(acct_id, txn_date, desc, amount),
                 "account_id": acct_id,
                 "date": txn_date,
                 "description": desc,

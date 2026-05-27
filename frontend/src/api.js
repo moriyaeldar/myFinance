@@ -39,7 +39,6 @@ export const importCSV = (file, account_name) => {
   form.append('file', file)
   return api.post('/import/csv', form, {
     params: account_name ? { account_name } : {},
-    headers: { 'Content-Type': 'multipart/form-data' },
   }).then(r => r.data)
 }
 

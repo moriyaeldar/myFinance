@@ -8,6 +8,8 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
@@ -125,9 +127,13 @@ async def import_csv(
     content = await file.read()
     account_id = f"csv-{uuid.uuid4().hex[:8]}"
 
-    transactions = parse_csv(content, account_id, filename=file.filename or "")
+    try:
+        transactions = parse_csv(content, account_id, filename=file.filename or "")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Parse error: {e}")
+
     if not transactions:
-        raise HTTPException(status_code=400, detail="No valid transactions found in file.")
+        raise HTTPException(status_code=400, detail="No valid transactions found. Check that the file is a supported bank export format.")
 
     # Create a synthetic account for the CSV
     currency = transactions[0].get("currency", "USD") if transactions else "USD"
@@ -313,3 +319,17 @@ def get_ai_advice(db: Session = Depends(get_db)):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "1.0.0"}
+
+
+# ---------------------------------------------------------------------------
+# Serve React frontend (production build)
+# ---------------------------------------------------------------------------
+
+_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/dist")
+
+if os.path.exists(_DIST):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_DIST, "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        return FileResponse(os.path.join(_DIST, "index.html"))
