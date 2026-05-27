@@ -31,9 +31,9 @@ from analyzer import categorize
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_id(account_id: str, txn_date, desc: str, amount: float) -> str:
+def _make_id(account_id: str, txn_date, desc: str, amount: float, ref: str = "") -> str:
     """Deterministic ID so re-importing the same file doesn't create duplicates."""
-    key = f"{account_id}|{txn_date}|{desc}|{amount:.2f}"
+    key = f"{account_id}|{txn_date}|{desc}|{amount:.2f}|{ref}"
     return "csv-" + hashlib.sha1(key.encode()).hexdigest()[:20]
 
 
@@ -77,13 +77,14 @@ def _norm(headers: List[str]) -> dict:
 
 # Hebrew header keywords for each Israeli bank
 _IL_BANK_SIGNATURES = {
-    # Credit-card companies first (more specific headers)
+    # Credit-card companies — most specific first
+    "max_hapoalim":   {"תאריך", "שם בית עסק", "שם כרטיס"},   # Max via Hapoalim portal
     "max":            {"תאריך עסקה", "שם בית עסק", "סכום חיוב"},
     "cal":            {"תאריך עסקה", "שם בית עסק", "סכום"},
     "isracard":       {"תאריך", "שם בית עסק", "סכום חיוב"},
     # Banks — more specific first
-    "hapoalim":       {"תאריך", "הפעולה", "חובה", "זכות"},   # new Hapoalim export format
-    "hapoalim_old":   {"תאריך", "תיאור", "חובה", "זכות"},    # old Hapoalim format
+    "hapoalim":       {"תאריך", "הפעולה", "חובה", "זכות"},
+    "hapoalim_old":   {"תאריך", "תיאור", "חובה", "זכות"},
     "leumi":          {"תאריך ערך", "תיאור", "חובה", "זכות"},
     "mizrahi":        {"תאריך", "תיאור הפעולה", "חובה", "זכות"},
     "discount":       {"תאריך", "פרטים", "חובה", "זכות"},
@@ -182,7 +183,19 @@ def _parse_il_row(row, h, fmt, account_id) -> dict | None:
         idx = h.get(name)
         return row[idx].strip() if idx is not None and idx < len(row) else ""
 
-    if fmt == "il_max":
+    if fmt == "il_max_hapoalim":
+        # Columns: שם כרטיס | חיוב לתאריך | תאריך | שם בית עסק | סכום חיוב בש''ח | סכום קנייה | אסמכתא
+        txn_date = _parse_date(col("תאריך"))
+        desc = col("שם בית עסק")
+        amount_col = next((k for k in h if k.startswith("סכום חיוב")), None)
+        raw_amount = row[h[amount_col]].strip() if amount_col and amount_col in h else ""
+        if not raw_amount:
+            purchase_col = next((k for k in h if "סכום קנייה" in k), None)
+            raw_amount = row[h[purchase_col]].strip() if purchase_col and purchase_col in h else "0"
+        amount = _parse_amount(raw_amount)
+        ref = col("אסמכתא")  # unique reference per transaction
+
+    elif fmt == "il_max":
         txn_date = _parse_date(col("תאריך עסקה"))
         desc = col("שם בית עסק")
         amount = _parse_amount(col("סכום חיוב"))
@@ -245,8 +258,9 @@ def _parse_il_row(row, h, fmt, account_id) -> dict | None:
         group = "Income"
         category = "Income"
 
+    ref = locals().get("ref", "")
     return {
-        "id": _make_id(account_id, txn_date, desc, amount),
+        "id": _make_id(account_id, txn_date, desc, amount, ref),
         "account_id": account_id,
         "date": txn_date,
         "description": desc,
