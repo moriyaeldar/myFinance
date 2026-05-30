@@ -3,8 +3,9 @@ import axios from 'axios'
 const api = axios.create({ baseURL: '/api' })
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
-export const fetchAnalysis = () => api.get('/analysis').then(r => r.data)
+export const fetchAnalysis = (params = {}) => api.get('/analysis', { params }).then(r => r.data)
 export const fetchAdvice   = () => api.get('/analysis/advice').then(r => r.data)
+export const fetchBillingMonths = () => api.get('/billing-months').then(r => r.data)
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
 export const fetchAccounts   = () => api.get('/accounts').then(r => r.data)

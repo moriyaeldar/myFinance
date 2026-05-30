@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchTransactions, fetchAnalysis } from '../api'
+import { fetchTransactions, fetchAnalysis, fetchBillingMonths } from '../api'
 import { Search, TrendingUp, TrendingDown } from 'lucide-react'
 import clsx from 'clsx'
 import { useLang } from '../LangContext'
@@ -21,20 +21,43 @@ function fmt(n) {
   return '₪' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(n))
 }
 
+function fmtBillingLabel(bm, lang) {
+  const s = new Date(bm.start + 'T00:00:00')
+  const e = new Date(bm.end + 'T00:00:00')
+  if (lang === 'he') {
+    return `${s.getDate()}.${s.getMonth() + 1} – ${e.getDate()}.${e.getMonth() + 1}.${e.getFullYear()}`
+  }
+  return (
+    s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    ' – ' +
+    e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  )
+}
+
 export default function TransactionList() {
   const { t, lang } = useLang()
   const [search, setSearch] = useState('')
   const [groupFilter, setGroupFilter] = useState('')
   const [limit, setLimit] = useState(100)
+  const [billingMonth, setBillingMonth] = useState('')
 
   const fmtDate = (d) => new Date(d).toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+  const { data: billingMonths = [] } = useQuery({ queryKey: ['billing-months'], queryFn: fetchBillingMonths })
+  const selectedBM = billingMonths.find(bm => bm.label === billingMonth)
 
   const { data: analysis } = useQuery({ queryKey: ['analysis'], queryFn: fetchAnalysis })
   const groups = analysis?.categories?.map(c => c.category_group) || []
 
+  const txnParams = {
+    category_group: groupFilter || undefined,
+    limit,
+    ...(selectedBM ? { start_date: selectedBM.start, end_date: selectedBM.end } : {}),
+  }
+
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions', groupFilter, limit],
-    queryFn: () => fetchTransactions({ category_group: groupFilter || undefined, limit }),
+    queryKey: ['transactions', groupFilter, limit, billingMonth],
+    queryFn: () => fetchTransactions(txnParams),
   })
 
   const filtered = transactions.filter(t =>
@@ -57,6 +80,18 @@ export default function TransactionList() {
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
+        {billingMonths.length > 0 && (
+          <select
+            value={billingMonth}
+            onChange={e => setBillingMonth(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white"
+          >
+            <option value="">{lang === 'he' ? 'כל הזמן' : 'All time'}</option>
+            {billingMonths.map(bm => (
+              <option key={bm.label} value={bm.label}>{fmtBillingLabel(bm, lang)}</option>
+            ))}
+          </select>
+        )}
         <div className="relative flex-1 min-w-48">
           <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input

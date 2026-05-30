@@ -47,6 +47,25 @@ init_db()
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _billing_month(d: date) -> tuple:
+    """Return (year, month) of the billing period a date falls into (10th–9th cycle)."""
+    if d.day >= 10:
+        return (d.year, d.month)
+    if d.month == 1:
+        return (d.year - 1, 12)
+    return (d.year, d.month - 1)
+
+
+def _billing_period_dates(year: int, month: int):
+    """Return (start_date, end_date) for a billing month."""
+    start = date(year, month, 10)
+    if month == 12:
+        end = date(year + 1, 1, 9)
+    else:
+        end = date(year, month + 1, 9)
+    return start, end
+
+
 def _settings_map(db: Session) -> dict:
     """Return {category_group: {status, monthly_budget}} dict."""
     settings = db.query(CategorySettings).all()
@@ -257,9 +276,39 @@ def update_category_settings(
 # Analysis
 # ---------------------------------------------------------------------------
 
+@app.get("/api/billing-months", tags=["Analysis"])
+def get_billing_months(db: Session = Depends(get_db)):
+    """Return all billing periods (10th–9th) that have transactions, newest first."""
+    rows = db.query(Transaction.date).all()
+    seen: set = set()
+    for (d,) in rows:
+        seen.add(_billing_month(d))
+    result = []
+    for (year, month) in sorted(seen, reverse=True):
+        start, end = _billing_period_dates(year, month)
+        result.append({
+            "label": f"{year}-{month:02d}",
+            "year": year,
+            "month": month,
+            "start": str(start),
+            "end": str(end),
+        })
+    return result
+
+
 @app.get("/api/analysis", tags=["Analysis"])
-def get_analysis(db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).all()
+def get_analysis(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+):
+    q = db.query(Transaction)
+    if start_date:
+        q = q.filter(Transaction.date >= start_date)
+    if end_date:
+        q = q.filter(Transaction.date <= end_date)
+    transactions = q.all()
+    all_transactions = db.query(Transaction).all()
     accounts = db.query(Account).filter_by(active=True).all()
     smap = _settings_map(db)
     status_map = {k: v["status"] for k, v in smap.items()}
@@ -272,7 +321,7 @@ def get_analysis(db: Session = Depends(get_db)):
         "dashboard": {
             **dashboard_raw,
             "accounts_connected": len(accounts),
-            "transactions_count": len(transactions),
+            "transactions_count": len(all_transactions),
         },
         "categories": categories,
         "monthly_trends": trends,

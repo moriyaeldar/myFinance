@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchAnalysis, updateCategoryStatus, updateCategoryBudget } from '../api'
+import { fetchAnalysis, fetchBillingMonths, updateCategoryStatus, updateCategoryBudget } from '../api'
 import {
   ChevronDown, ChevronUp, Scissors, Shield, HelpCircle,
   CheckCircle2, TrendingDown, PiggyBank, GripVertical,
@@ -367,13 +367,32 @@ function CategoryCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+function fmtBillingLabel(bm, lang) {
+  const s = new Date(bm.start + 'T00:00:00')
+  const e = new Date(bm.end + 'T00:00:00')
+  if (lang === 'he') {
+    return `${s.getDate()}.${s.getMonth() + 1} – ${e.getDate()}.${e.getMonth() + 1}.${e.getFullYear()}`
+  }
+  return (
+    s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    ' – ' +
+    e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  )
+}
+
 export default function ExpenseGroups() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const qc = useQueryClient()
+  const [billingMonth, setBillingMonth] = useState('')
+
+  const { data: billingMonths = [] } = useQuery({ queryKey: ['billing-months'], queryFn: fetchBillingMonths })
+  const selectedBM = billingMonths.find(bm => bm.label === billingMonth)
+
+  const analysisParams = selectedBM ? { start_date: selectedBM.start, end_date: selectedBM.end } : {}
 
   const { data, isLoading } = useQuery({
-    queryKey: ['analysis'],
-    queryFn: fetchAnalysis,
+    queryKey: ['analysis', billingMonth || 'all'],
+    queryFn: () => fetchAnalysis(analysisParams),
   })
 
   const statusMut = useMutation({
@@ -467,9 +486,23 @@ export default function ExpenseGroups() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">{t('expenses_title')}</h1>
-        <p className="text-sm text-slate-400 mt-1">{t('expenses_sub')}</p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">{t('expenses_title')}</h1>
+          <p className="text-sm text-slate-400 mt-1">{t('expenses_sub')}</p>
+        </div>
+        {billingMonths.length > 0 && (
+          <select
+            value={billingMonth}
+            onChange={e => setBillingMonth(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white"
+          >
+            <option value="">{lang === 'he' ? 'כל הזמן' : 'All time'}</option>
+            {billingMonths.map(bm => (
+              <option key={bm.label} value={bm.label}>{fmtBillingLabel(bm, lang)}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Goals panel */}
