@@ -169,16 +169,48 @@ async def import_csv(
     )
     db.merge(acct)
 
+    # Build a set of existing (date, amount, description) to catch cross-account duplicates
+    existing_keys = {
+        (str(r.date), round(r.amount, 2), r.description)
+        for r in db.query(Transaction.date, Transaction.amount, Transaction.description).all()
+    }
+
     added = 0
     for txn in transactions:
         txn["account_id"] = account_id
+        content_key = (str(txn["date"]), round(float(txn["amount"]), 2), txn.get("description", ""))
+        if content_key in existing_keys:
+            continue
         existing = db.query(Transaction).filter_by(id=txn["id"]).first()
         if not existing:
             db.add(Transaction(**txn))
+            existing_keys.add(content_key)
             added += 1
 
     db.commit()
     return {"transactions_added": added, "account_id": account_id}
+
+
+# ---------------------------------------------------------------------------
+# Admin
+# ---------------------------------------------------------------------------
+
+@app.post("/api/admin/deduplicate", tags=["Admin"])
+def deduplicate_transactions(db: Session = Depends(get_db)):
+    """Remove cross-account duplicate transactions (same date+amount+description), keeping oldest."""
+    all_txns = db.query(Transaction).order_by(Transaction.created_at).all()
+    seen: dict = {}
+    to_delete = []
+    for txn in all_txns:
+        key = (str(txn.date), round(txn.amount, 2), txn.description)
+        if key in seen:
+            to_delete.append(txn.id)
+        else:
+            seen[key] = txn.id
+    for txn_id in to_delete:
+        db.query(Transaction).filter_by(id=txn_id).delete()
+    db.commit()
+    return {"duplicates_removed": len(to_delete)}
 
 
 # ---------------------------------------------------------------------------

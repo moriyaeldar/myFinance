@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchAnalysis, fetchBillingMonths, updateCategoryStatus, updateCategoryBudget } from '../api'
+import { fetchAnalysis, fetchBillingMonths, fetchTransactions, updateCategoryStatus, updateCategoryBudget } from '../api'
 import {
   ChevronDown, ChevronUp, Scissors, Shield, HelpCircle,
   CheckCircle2, TrendingDown, PiggyBank, GripVertical,
@@ -217,11 +217,28 @@ function CategoryCard({
   cat, settings, onStatusChange, onBudgetChange,
   isDragging, isOver,
   onDragStart, onDragOver, onDrop, onDragEnd,
+  selectedBM,
 }) {
   const { t, lang } = useLang()
   const [open, setOpen] = useState(false)
   const [editBudget, setEditBudget] = useState(false)
   const [budgetVal, setBudgetVal] = useState(settings?.monthly_budget || '')
+
+  const txnQueryParams = {
+    category_group: cat.category_group,
+    limit: 100,
+    ...(selectedBM ? { start_date: selectedBM.start, end_date: selectedBM.end } : {}),
+  }
+  const { data: catTxns = [], isLoading: txnsLoading } = useQuery({
+    queryKey: ['cat-txns', cat.category_group, selectedBM?.label || 'all'],
+    queryFn: () => fetchTransactions(txnQueryParams),
+    enabled: open,
+  })
+
+  const fmtDate = (d) => {
+    const dt = new Date(d + 'T00:00:00')
+    return dt.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-US', { day: 'numeric', month: 'short' })
+  }
 
   const status = settings?.status || cat.status || 'optional'
   const cfg = STATUS_CONFIG[status]
@@ -337,17 +354,34 @@ function CategoryCard({
             )}
           </div>
 
-          {/* Top merchants */}
-          {cat.top_merchants?.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-slate-500 mb-2">{t('top_merchants')}</p>
-              <div className="flex flex-wrap gap-2">
-                {cat.top_merchants.map(m => (
-                  <span key={m} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg">{m}</span>
+          {/* Transactions list */}
+          <div>
+            <p className="text-xs font-medium text-slate-500 mb-2">
+              {lang === 'he' ? 'חיובים' : 'Transactions'}
+              {catTxns.length > 0 && <span className="text-slate-300 font-normal ml-1">({catTxns.length})</span>}
+            </p>
+            {txnsLoading ? (
+              <div className="flex justify-center py-3">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-sky-400 border-t-transparent" />
+              </div>
+            ) : catTxns.length === 0 ? (
+              <p className="text-xs text-slate-300 italic">{lang === 'he' ? 'אין עסקאות בתקופה זו' : 'No transactions in this period'}</p>
+            ) : (
+              <div className="divide-y divide-slate-50 -mx-1">
+                {catTxns.map(txn => (
+                  <div key={txn.id} className="flex items-center justify-between py-1.5 px-1 hover:bg-slate-50 rounded">
+                    <span className="text-xs text-slate-400 w-16 shrink-0">{fmtDate(txn.date)}</span>
+                    <span className="text-xs text-slate-700 flex-1 truncate mx-2">
+                      {txn.merchant_name || txn.description}
+                    </span>
+                    <span className={clsx('text-xs font-semibold shrink-0', txn.amount < 0 ? 'text-emerald-600' : 'text-slate-700')}>
+                      {txn.amount < 0 ? '+' : ''}₪{Math.abs(txn.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Cut hint */}
           {status === 'cut' && (
@@ -570,6 +604,7 @@ export default function ExpenseGroups() {
               onDragEnd={handleDragEnd}
               onStatusChange={(status) => statusMut.mutate({ group: cat.category_group, status })}
               onBudgetChange={(budget) => budgetMut.mutate({ group: cat.category_group, budget })}
+              selectedBM={selectedBM}
             />
           ))}
         </div>
