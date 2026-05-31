@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchAnalysis, fetchBillingMonths, fetchTransactions, updateCategoryStatus, updateCategoryBudget } from '../api'
+import { fetchAnalysis, fetchBillingMonths, fetchTransactions, updateCategoryStatus, updateCategoryBudget, recategorize } from '../api'
 import {
   ChevronDown, ChevronUp, Scissors, Shield, HelpCircle,
   CheckCircle2, TrendingDown, PiggyBank, GripVertical,
@@ -217,12 +217,21 @@ function CategoryCard({
   cat, settings, onStatusChange, onBudgetChange,
   isDragging, isOver,
   onDragStart, onDragOver, onDrop, onDragEnd,
-  selectedBM,
+  selectedBM, allGroups,
 }) {
   const { t, lang } = useLang()
+  const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [editBudget, setEditBudget] = useState(false)
   const [budgetVal, setBudgetVal] = useState(settings?.monthly_budget || '')
+
+  const moveMut = useMutation({
+    mutationFn: ({ id, group }) => recategorize(id, group, group),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cat-txns'] })
+      qc.invalidateQueries({ queryKey: ['analysis'] })
+    },
+  })
 
   const txnQueryParams = {
     category_group: cat.category_group,
@@ -369,12 +378,22 @@ function CategoryCard({
             ) : (
               <div className="divide-y divide-slate-50 -mx-1">
                 {catTxns.map(txn => (
-                  <div key={txn.id} className="flex items-center justify-between py-1.5 px-1 hover:bg-slate-50 rounded">
-                    <span className="text-xs text-slate-400 w-16 shrink-0">{fmtDate(txn.date)}</span>
-                    <span className="text-xs text-slate-700 flex-1 truncate mx-2">
+                  <div key={txn.id} className="flex items-center gap-2 py-1.5 px-1 hover:bg-slate-50 rounded group">
+                    <span className="text-xs text-slate-400 w-14 shrink-0">{fmtDate(txn.date)}</span>
+                    <span className="text-xs text-slate-700 flex-1 truncate">
                       {txn.merchant_name || txn.description}
                     </span>
-                    <span className={clsx('text-xs font-semibold shrink-0', txn.amount < 0 ? 'text-emerald-600' : 'text-slate-700')}>
+                    <select
+                      value={txn.category_group}
+                      onChange={e => moveMut.mutate({ id: txn.id, group: e.target.value })}
+                      className="text-xs border border-slate-200 rounded px-1 py-0.5 bg-white text-slate-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity max-w-[130px] shrink-0"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {allGroups.map(g => (
+                        <option key={g} value={g}>{translateCategory(g, lang)}</option>
+                      ))}
+                    </select>
+                    <span className={clsx('text-xs font-semibold shrink-0 w-14 text-right', txn.amount < 0 ? 'text-emerald-600' : 'text-slate-700')}>
                       {txn.amount < 0 ? '+' : ''}₪{Math.abs(txn.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </span>
                   </div>
@@ -459,6 +478,10 @@ export default function ExpenseGroups() {
       (idx.has(b.category_group) ? idx.get(b.category_group) : 999)
     )
   }, [data?.categories, savedOrder])
+
+  const allGroups = useMemo(() =>
+    (data?.categories || []).map(c => c.category_group).sort(),
+  [data?.categories])
 
   const avgIncome = useMemo(() => {
     const months = (data?.monthly_trends || []).filter(m => m.income > 0)
@@ -605,6 +628,7 @@ export default function ExpenseGroups() {
               onStatusChange={(status) => statusMut.mutate({ group: cat.category_group, status })}
               onBudgetChange={(budget) => budgetMut.mutate({ group: cat.category_group, budget })}
               selectedBM={selectedBM}
+              allGroups={allGroups}
             />
           ))}
         </div>
